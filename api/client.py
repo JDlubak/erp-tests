@@ -19,3 +19,10 @@ class ApiClient:
     def get_product(self, product_id: str) -> requests.Response:
         return self.session.get(self._url(f"/products/{product_id}"),
                                 timeout=10)
+
+    def login(self, username, password):
+        return self.session.post(self._url(f"/api/auth/login"),
+                         json={"username": username, "password": password}, auth=False)
+
+    def me(self, **kw):
+        return self.session.get(self._url("/api/auth/me"), **kw)
