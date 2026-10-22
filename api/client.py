@@ -149,3 +149,80 @@ class ApiClient:
     def get_trial_balance(self, headers=None) -> requests.Response:
         return self.session.get(self._url("/api/ledger/trial-balance"),
                                 headers=headers, timeout=10)
+
+# ---- autoryzacja: wylogowanie (TS-16)
+    def logout(self, headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/auth/logout"),
+                                 headers=headers, timeout=10)
+
+    # ---- magazyn: lista statusów towarów (TS-13)
+    def get_stock_status(self, headers=None) -> requests.Response:
+        return self.session.get(self._url(
+            "/api/inventory/items-status"), headers=headers, timeout=10)
+
+    # ---- sprzedaż: zamówienia sprzedaży (TS-09, TS-10, TS-11)
+    def create_sales_order(self, body: dict,
+                           headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/sales/sales-orders"),
+                                 json=body, headers=headers, timeout=10)
+
+    def get_sales_orders(self, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/sales/sales-orders"),
+                                headers=headers, timeout=10)
+
+    def get_sales_order(self, so_id, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url(f"/api/sales/sales-orders/{so_id}"),
+            headers=headers, timeout=10)
+
+    def confirm_sales_order(self, so_id,
+                            headers=None) -> requests.Response:
+        return self.session.post(
+            self._url(f"/api/sales/sales-orders/{so_id}/confirm"),
+            headers=headers, timeout=10)
+
+    # ---- sprzedaż: wydania towaru i faktury (TS-12, TS-21)
+    def create_shipment(self, body: dict,
+                        headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/sales/deliveries"),
+                                 json=body, headers=headers, timeout=10)
+
+    def create_sales_invoice(self, body: dict,
+                             headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/sales/sales-invoices"),
+                                 json=body, headers=headers, timeout=10)
+
+    # ---- produkcja: zlecenia produkcyjne (TS-18, TS-19)
+    def create_production_order(self, body: dict,
+                                headers=None) -> requests.Response:
+        return self.session.post(
+            self._url("/api/manufacturing/work-orders"),
+            json=body, headers=headers, timeout=10)
+
+    def release_production_order(self, order_id,
+                                 headers=None) -> requests.Response:
+        return self.session.post(self._url(
+            f"/api/manufacturing/work-orders/{order_id}/release"),
+                                 headers=headers, timeout=10)
+
+    def complete_production_order(self, order_id, body: dict = None,
+                                  headers=None) -> requests.Response:
+        return self.session.post(self._url(
+            f"/api/manufacturing/work-orders/{order_id}/complete"),
+                                 json=body, headers=headers, timeout=10)
+
+    def issue_production_order(self, order_id, body: dict,
+                               headers=None) -> requests.Response:
+        return self.session.post(self._url(
+            f"/api/manufacturing/work-orders/{order_id}/issue"),
+                                 json=body, headers=headers, timeout=10)
+
+    def cancel_production_order(self, order_id, body: dict,
+                                headers=None) -> requests.Response:
+        return self.session.post(self._url(
+            f"/api/manufacturing/work-orders/{order_id}/cancel"),
+                                 json=body, headers=headers, timeout=10)
+
+    def create_bom(self, body: dict, headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/manufacturing/boms"),
+                                 json=body, headers=headers, timeout=10)
