@@ -12,17 +12,140 @@ class ApiClient:
     def _url(self, path: str) -> str:
         return f"{self.base_url}{path}"
 
-    def get_products(self, **params) -> requests.Response:
-        return self.session.get(self._url("/products"), params=params,
+    # ---- autoryzacja (TS-01, TS-02, TS-16) -------------------------------
+    def login(self, username, password) -> requests.Response:
+        return self.session.post(self._url("/api/auth/login"),
+                                 json={"username": username,
+                                       "password": password},
+                                 timeout=10)
+
+    def me(self, **kw) -> requests.Response:
+        return self.session.get(self._url("/api/auth/me"), timeout=10, **kw)
+
+    # ---- dane podstawowe: pozycje towarowe (TS-03, TS-04) -----------------
+    def create_item(self, body: dict, headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/masterdata/items"),
+                                 json=body, headers=headers, timeout=10)
+
+    def get_items(self, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/masterdata/items"),
+                                headers=headers, timeout=10)
+
+    def get_item(self, item_id, headers=None) -> requests.Response:
+        return self.session.get(self._url(f"/api/masterdata/items/{item_id}"),
+                                headers=headers, timeout=10)
+
+    def get_item_by_sku(self, sku: str, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/masterdata/items/by-sku"),
+                                params={"sku": sku}, headers=headers,
                                 timeout=10)
 
-    def get_product(self, product_id: str) -> requests.Response:
-        return self.session.get(self._url(f"/products/{product_id}"),
-                                timeout=10)
+    # ---- dane podstawowe: kontrahenci -------------------------------------
+    def create_partner(self, body: dict, headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/masterdata/partners"),
+                                 json=body, headers=headers, timeout=10)
 
-    def login(self, username, password):
-        return self.session.post(self._url(f"/api/auth/login"),
-                         json={"username": username, "password": password}, auth=False)
+    # ---- zakupy: zamówienia zakupu (TS-05, TS-06, TS-07) --------------------
+    def create_purchase_order(self, body: dict,
+                              headers=None) -> requests.Response:
+        return self.session.post(
+            self._url("/api/purchasing/purchase-orders"),
+            json=body, headers=headers, timeout=10)
 
-    def me(self, **kw):
-        return self.session.get(self._url("/api/auth/me"), **kw)
+    def get_purchase_order(self, po_id, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url(f"/api/purchasing/purchase-orders/{po_id}"),
+            headers=headers, timeout=10)
+
+    def confirm_purchase_order(self, po_id, headers=None) -> requests.Response:
+        return self.session.post(
+            self._url(f"/api/purchasing/purchase-orders/{po_id}/confirm"),
+            headers=headers, timeout=10)
+
+    # ---- zakupy: przyjęcie towaru GRN (TS-08) ------------------------------
+    def create_goods_receipt(self, body: dict,
+                             headers=None) -> requests.Response:
+        return self.session.post(
+            self._url("/api/purchasing/goods-receipts"),
+            json=body, headers=headers, timeout=10)
+
+    # ---- dane podstawowe: magazyny i lokalizacje ---------------------------
+    def get_warehouses(self, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/masterdata/warehouses"),
+                                headers=headers, timeout=10)
+
+    def get_locations(self, warehouse_id, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/masterdata/locations"),
+                                params={"warehouseId": warehouse_id},
+                                headers=headers, timeout=10)
+
+    def get_purchase_orders(self, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url("/api/purchasing/purchase-orders"),
+            headers=headers, timeout=10)
+
+    def get_goods_receipt(self, grn_id, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url(f"/api/purchasing/goods-receipts/{grn_id}"),
+            headers=headers, timeout=10)
+
+    def get_goods_receipts(self, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url("/api/purchasing/goods-receipts"),
+            headers=headers, timeout=10)
+
+    # ---- administracja: dziennik audytu (TS-17) ----------------------------
+    def get_audit_log(self, headers=None, **params) -> requests.Response:
+        return self.session.get(self._url("/api/audit"), params=params,
+                                headers=headers, timeout=10)
+
+    def post_audit_log(self, body: dict, headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/audit"), json=body,
+                                 headers=headers, timeout=10)
+
+    # ---- autoryzacja: odświeżanie tokena (TS-02) ---------------------------
+    def refresh(self, refresh_cookie=None) -> requests.Response:
+        """Bez argumentu używa ciasteczka zapisanego w sesji po logowaniu.
+        Z argumentem wysyła podaną wartość ciasteczka (osobne żądanie, bez sesji)."""
+        if refresh_cookie is None:
+            return self.session.post(self._url("/api/auth/refresh"),
+                                     timeout=10)
+        return requests.post(self._url("/api/auth/refresh"),
+                             headers={"Accept": "application/json",
+                                      "Cookie": f"refresh_token={refresh_cookie}"},
+                             timeout=10)
+
+    def get_refresh_cookie(self):
+        return self.session.cookies.get("refresh_token")
+
+    # ---- magazyn: korekty stanów (TS-14) -----------------------------------
+    def create_stock_adjustment(self, body: dict,
+                                headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/inventory/adjustments"),
+                                 json=body, headers=headers, timeout=10)
+
+    def get_item_on_hand(self, item_id, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url(f"/api/inventory/items/{item_id}/on-hand"),
+            headers=headers, timeout=10)
+
+    # ---- księga główna: księgowania ręczne i ich odwracanie (TS-20) ----------
+    def create_journal_entry(self, body: dict,
+                             headers=None) -> requests.Response:
+        return self.session.post(self._url("/api/ledger/journal-entries"),
+                                 json=body, headers=headers, timeout=10)
+
+    def get_journal_entry(self, entry_no, headers=None) -> requests.Response:
+        return self.session.get(
+            self._url(f"/api/ledger/journal-entries/{entry_no}"),
+            headers=headers, timeout=10)
+
+    def reverse_journal_entry(self, entry_no, body=None,
+                              headers=None) -> requests.Response:
+        return self.session.post(
+            self._url(f"/api/ledger/journal-entries/{entry_no}/reverse"),
+            json=body, headers=headers, timeout=10)
+
+    def get_trial_balance(self, headers=None) -> requests.Response:
+        return self.session.get(self._url("/api/ledger/trial-balance"),
+                                headers=headers, timeout=10)
