@@ -226,3 +226,9 @@ class ApiClient:
     def create_bom(self, body: dict, headers=None) -> requests.Response:
         return self.session.post(self._url("/api/manufacturing/boms"),
                                  json=body, headers=headers, timeout=10)
+
+    def get_production_order(self, order_id,
+                             headers=None) -> requests.Response:
+        return self.session.get(self._url(
+            f"/api/manufacturing/work-orders/{order_id}"),
+            headers=headers, timeout=10)

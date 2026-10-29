@@ -1,4 +1,4 @@
-# toolshop-tests
+# erp-tests
 
 ## Wymagania
 Python 3.10+, uruchomiona aplikacja na Dockerze.
@@ -14,6 +14,7 @@ pip install -r requirements.txt
 ```
 pytest                  # wszystkie testy
 pytest -m api           # tylko API
+pytest -m ui           # tylko UI
 pytest -m smoke         # tylko testy o wysokim priorytecie
 pytest -v               # z nazwami testów
 ```

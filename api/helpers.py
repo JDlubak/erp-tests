@@ -288,3 +288,13 @@ def create_draft_wo(api, qty="5"):
     assert response.status_code == 201, response.text
     return warehouse, response.json(), loc_id
 
+
+# Kod lokalizacji (np. WH1-STOCK) o podanym id; pozwala wskazać ją w UI
+def location_code_by_id(
+        api, headers, location_id):
+    for warehouse in api.get_warehouses(headers=headers).json():
+        for loc in api.get_locations(warehouse["id"],
+                                     headers=headers).json():
+            if loc["id"] == location_id:
+                return loc["code"]
+    raise LookupError(f"Brak lokalizacji o id {location_id}")
